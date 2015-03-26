@@ -1,0 +1,24 @@
+{
+	"name": "brosland/framework",
+	"description": "The thin layer above Nette framework.",
+	"keywords": ["brosland", "framework", "kdyby", "nette"],
+	"homepage": "",
+	"authors": [
+		{
+			"name": "Martin Bros",
+			"email": "mbskot@gmail.com"
+		}
+	],
+	"autoload": {
+		"psr-0": {
+			"brosland\\framework": "src/"
+		}
+	},
+	"minimum-stability": "dev",
+	"require": {
+		"php": ">= 5.5",
+		"nette/nette": "~2.3.0",
+		"kdyby/doctrine": "dev-master",
+		"kdyby/translation": "dev-master"
+	}
+}
