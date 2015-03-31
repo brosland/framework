@@ -11,6 +11,8 @@ use Brosland\Models\PreferenceEntity,
 
 class BroslandExtension extends \Nette\DI\CompilerExtension implements IEntityProvider
 {
+	const TAG_MODULE_ROUTER = 'brosland.moduleRouter';
+
 	/**
 	 * @var array
 	 */
@@ -41,8 +43,9 @@ class BroslandExtension extends \Nette\DI\CompilerExtension implements IEntityPr
 		$config = $this->getConfig(self::$DEFAULTS);
 		$builder = $this->getContainerBuilder();
 
-		$builder->addDefinition($this->prefix('routerFactory'))
-			->setClass(\Brosland\RouterFactory::class);
+		$builder->addDefinition($this->prefix('router'))
+			->setFactory(\Brosland\RouterFactory::class . '::createRouter')
+			->setAutowired(FALSE);
 
 		$builder->addDefinition($this->prefix('authorizator'))
 			->setClass(\Brosland\Security\Authorizator::class)
@@ -77,8 +80,16 @@ class BroslandExtension extends \Nette\DI\CompilerExtension implements IEntityPr
 
 		$builder = $this->getContainerBuilder();
 
-		$builder->getDefinition('router')
-			->setFactory($this->prefix('@routerFactory::createRouter'));
+		$router = $builder->getDefinition('router');
+		
+		$moduleRouters = array_keys($builder->findByTag(self::TAG_MODULE_ROUTER));
+		
+		foreach ($moduleRouters as $serviceName)
+		{
+			$router->addSetup('offsetSet', array(NULL, '@' . $serviceName));
+		}
+
+		$router->addSetup('offsetSet', array(NULL, $this->prefix('@router')));
 	}
 
 	/**
