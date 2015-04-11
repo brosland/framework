@@ -19,6 +19,10 @@ class Authenticator extends Object implements NS\IAuthenticator
 	 * @var string
 	 */
 	private $salt;
+	/**
+	 * @var IIdentityFactory
+	 */
+	private $identityFactory = NULL;
 
 
 	/**
@@ -29,6 +33,17 @@ class Authenticator extends Object implements NS\IAuthenticator
 	{
 		$this->userDao = $userDao;
 		$this->salt = $salt;
+	}
+
+	/**
+	 * @param \Brosland\Security\IIdentityFactory $identityFactory
+	 * @return self
+	 */
+	public function setIdentityFactory(IIdentityFactory $identityFactory)
+	{
+		$this->identityFactory = $identityFactory;
+
+		return $this;
 	}
 
 	/**
@@ -45,30 +60,42 @@ class Authenticator extends Object implements NS\IAuthenticator
 
 		if (!$user)
 		{
-			throw new NS\AuthenticationException('messages.signPresenter.errors.identityNotFound', self::IDENTITY_NOT_FOUND);
+			throw new NS\AuthenticationException('messages.signPresenter.errors.identityNotFound',
+			self::IDENTITY_NOT_FOUND);
 		}
 		else if ($user->getPassword() !== $this->calculateHash($password))
 		{
-			throw new NS\AuthenticationException('messages.signPresenter.errors.invalidCredential', self::INVALID_CREDENTIAL);
+			throw new NS\AuthenticationException('messages.signPresenter.errors.invalidCredential',
+			self::INVALID_CREDENTIAL);
 		}
 		else if (!$user->isActivated())
 		{
-			throw new NS\AuthenticationException('messages.signPresenter.errors.notActivated', self::NOT_ACTIVATED);
+			throw new NS\AuthenticationException('messages.signPresenter.errors.notActivated',
+			self::NOT_ACTIVATED);
 		}
 		else if (!$user->isApproved())
 		{
-			throw new NS\AuthenticationException('messages.signPresenter.errors.notApproved', self::NOT_APPROVED);
+			throw new NS\AuthenticationException('messages.signPresenter.errors.notApproved',
+			self::NOT_APPROVED);
 		}
 
 		$user->setLastLog(new \DateTime());
 		$this->userDao->save($user);
 
-		return new NS\Identity($user->getId(), $user->getRoles()->getValues(), array (
-			'name' => $user->getName(),
-			'surname' => $user->getSurname(),
-			'email' => $user->getEmail(),
-			'phone' => $user->getPhone()
-		));
+		if ($this->identityFactory !== NULL)
+		{
+			return $this->identityFactory->create($user);
+		}
+		else
+		{
+			return new NS\Identity($user->getId(), $user->getRoles()->getValues(),
+				array (
+				'name' => $user->getName(),
+				'surname' => $user->getSurname(),
+				'email' => $user->getEmail(),
+				'phone' => $user->getPhone()
+			));
+		}
 	}
 
 	/**
