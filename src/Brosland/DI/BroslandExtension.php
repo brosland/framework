@@ -5,7 +5,6 @@ namespace Brosland\DI;
 use Brosland\Models\PreferenceEntity,
 	Brosland\Security\Models\PrivilegeEntity,
 	Brosland\Security\Models\RoleEntity,
-	Brosland\Security\Models\UserEntity,
 	Kdyby\Doctrine\DI\IEntityProvider,
 	Nette\DI\Statement;
 
@@ -55,13 +54,6 @@ class BroslandExtension extends \Nette\DI\CompilerExtension implements IEntityPr
 			))
 			->addSetup('addPrivilegeDefinitions', array ($config['security']['privileges']))
 			->addSetup('addRoleDefinitions', array ($config['security']['roles']));
-
-		$builder->addDefinition($this->prefix('authenticator'))
-			->setClass(\Brosland\Security\Authenticator::class)
-			->setArguments(array (
-				new Statement('@doctrine.dao', array (UserEntity::class)),
-				$config['security']['passwordSalt']
-		));
 
 		$builder->addDefinition($this->prefix('preferences'))
 			->setClass(\Brosland\Models\Preferences::class)
