@@ -54,7 +54,10 @@ class Authorizator extends Permission
 			return;
 		}
 
-		$roles = $this->roleDao->findAll();
+		$roles = $this->roleDao->createQueryBuilder('role')
+			->addSelect('privilege')
+			->leftJoin('role.privileges', 'privilege')
+			->getQuery()->execute();
 		/* @var $roles RoleEntity[] */
 
 		foreach ($roles as $role)
