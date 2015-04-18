@@ -2,7 +2,8 @@
 	"name": "brosland/framework",
 	"description": "The thin layer above Nette framework.",
 	"keywords": ["brosland", "framework", "kdyby", "nette"],
-	"homepage": "",
+	"homepage": "http://bros.land",
+	"license": ["MIT"],
 	"authors": [
 		{
 			"name": "Martin Bros",
@@ -17,7 +18,7 @@
 	"minimum-stability": "dev",
 	"require": {
 		"php": ">= 5.5",
-		"nette/nette": "~2.3.0",
+		"nette/nette": "~2.3",
 		"kdyby/doctrine": "dev-master",
 		"kdyby/translation": "dev-master"
 	}
