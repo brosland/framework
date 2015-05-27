@@ -5,25 +5,9 @@ namespace Brosland\DI;
 class PageConfiguration extends \Nette\Object
 {
 	/**
-	 * @var string
-	 */
-	public $version;
-	/**
-	 * @var string
-	 */
-	public $name;
-	/**
-	 * @var string
-	 */
-	public $email;
-	/**
-	 * @var int
-	 */
-	public $created;
-	/**
 	 * @var array
 	 */
-	public $owner;
+	private $config;
 
 
 	/**
@@ -31,16 +15,46 @@ class PageConfiguration extends \Nette\Object
 	 */
 	public function __construct(array $config)
 	{
-		if (!isset($config['name']) || !isset($config['email']) || !isset($config['created']) || !isset($config['owner']))
-		{
-			throw new \Nette\InvalidArgumentException(
-			'One of required parameters (name, email, created, owner) is missing.');
-		}
+		$this->config = $config;
+	}
 
-		$this->version = $config['version'];
-		$this->name = $config['name'];
-		$this->email = $config['email'];
-		$this->created = (int) $config['created'];
-		$this->owner = $config['owner'];
+	/**
+	 * @return string
+	 */
+	public function getUrl()
+	{
+		return $this->config['url'];
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName()
+	{
+		return $this->config['name'];
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getEmail()
+	{
+		return $this->config['email'];
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getCreated()
+	{
+		return $this->config['created'];
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getOwner()
+	{
+		return $this->config['owner'];
 	}
 }
