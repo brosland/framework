@@ -20,15 +20,15 @@ abstract class Presenter extends \Nette\Application\UI\Presenter
 	{
 		if ($this->user->isLoggedIn())
 		{
-			$this->error('Access denied.', 403);
+			$this->error('common.accessDenied.', 403);
 		}
 
 		if ($this->user->getLogoutReason() === \Nette\Security\User::INACTIVITY)
 		{
-			$this->flashMessage('Pre neaktivitu ste boli odhlásený.', 'warning');
+			$this->flashMessage('common.loggedOutMessage', 'warning');
 		}
 
-		$this->flashMessage('Pre prístup k tejto operácií sa prosím prihláste.', 'warning');
+		$this->flashMessage('common.signInRequestMessage', 'warning');
 		$backlink = $this->storeRequest();
 
 		if ($this->isAjax())

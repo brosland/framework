@@ -127,7 +127,7 @@ abstract class EntityForm extends Form
 
 		if (empty($properties))
 		{
-			throw new \Nette\InvalidArgumentException('Path to property is empty.');
+			throw new \Nette\InvalidArgumentException('The path to the property is empty.');
 		}
 
 		foreach ($properties as $property)
