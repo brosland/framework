@@ -24,7 +24,7 @@ class BootstrapRenderer extends DefaultFormRenderer
 		$this->wrappers['controls']['container'] = NULL;
 		$this->wrappers['pair']['container'] = 'div class=form-group';
 		$this->wrappers['pair']['.error'] = 'has-error';
-		$this->wrappers['control']['container'] = 'div';
+		$this->wrappers['control']['container'] = 'div class=controls';
 		$this->wrappers['label']['container'] = 'div class="control-label"';
 		$this->wrappers['control']['description'] = 'span class=help-block';
 		$this->wrappers['control']['errorcontainer'] = 'span class=help-block';
