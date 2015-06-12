@@ -4,154 +4,129 @@ namespace Brosland\Forms;
 
 use Nette\Forms\Rendering\DefaultFormRenderer,
 	Nette\Forms\Controls,
-	Nette\Forms\Form,
-	Nette\Forms\IControl;
+	Nette\Forms\Form;
 
 class BootstrapRenderer extends DefaultFormRenderer
 {
+	const PRIMARY_BUTTON = 'btn-primary';
+	const TYPE_VERTICAL = 'vertical',
+		TYPE_HORIZONTAL = 'horizontal',
+		TYPE_INLINE = 'inline';
+
+
 	/**
-	 * @var Controls\Button
+	 * @var string
 	 */
-	public $primaryButton = NULL;
+	private $type = self::TYPE_HORIZONTAL;
 	/**
-	 * @var bool
+	 * @var string
 	 */
-	private $initialized = FALSE;
+	private $templatePath = NULL;
 
 
 	public function __construct()
 	{
 		$this->wrappers['controls']['container'] = NULL;
-		$this->wrappers['pair']['container'] = 'div class=form-group';
+		$this->wrappers['pair']['container'] = 'div class="form-group"';
 		$this->wrappers['pair']['.error'] = 'has-error';
-		$this->wrappers['control']['container'] = 'div class=controls';
+		$this->wrappers['control']['container'] = NULL;
 		$this->wrappers['label']['container'] = 'div class="control-label"';
-		$this->wrappers['control']['description'] = 'span class=help-block';
-		$this->wrappers['control']['errorcontainer'] = 'span class=help-block';
+		$this->wrappers['control']['description'] = 'span class="help-block"';
+		$this->wrappers['control']['errorcontainer'] = 'span class="help-block"';
 	}
 
 	/**
-	 * @return string
+	 * @param type $type
+	 * @return self
+	 * @throws \Nette\InvalidArgumentException
 	 */
-	public function renderBegin()
+	public function setRenderType($type)
 	{
-		$this->controlsInit();
-
-		return parent::renderBegin();
-	}
-
-	/**
-	 * @return string
-	 */
-	public function renderEnd()
-	{
-		$this->controlsInit();
-
-		return parent::renderEnd();
-	}
-
-	/**
-	 * @return string
-	 */
-	public function renderBody()
-	{
-		$this->controlsInit();
-
-		return parent::renderBody();
-	}
-
-	/**
-	 * 
-	 * @param \Nette\Forms\Container $parent
-	 * @return string
-	 */
-	public function renderControls($parent)
-	{
-		$this->controlsInit();
-
-		return parent::renderControls($parent);
-	}
-
-	/**
-	 * @param \Nette\Forms\IControl $control
-	 * @return string
-	 */
-	public function renderPair(IControl $control)
-	{
-		$this->controlsInit();
-
-		return parent::renderPair($control);
-	}
-
-	/**
-	 * @param array $controls
-	 * @return string
-	 */
-	public function renderPairMulti(array $controls)
-	{
-		$this->controlsInit();
-
-		return parent::renderPairMulti($controls);
-	}
-
-	/**
-	 * @param \Nette\Forms\IControl $control
-	 * @return string
-	 */
-	public function renderLabel(IControl $control)
-	{
-		$this->controlsInit();
-
-		return parent::renderLabel($control);
-	}
-
-	/**
-	 * @param \Nette\Forms\IControl $control
-	 * @return string
-	 */
-	public function renderControl(IControl $control)
-	{
-		$this->controlsInit();
-
-		return parent::renderControl($control);
-	}
-
-	private function controlsInit()
-	{
-		if ($this->initialized)
+		if (!in_array($type, [self::TYPE_HORIZONTAL, self::TYPE_VERTICAL, self::TYPE_INLINE]))
 		{
-			return;
+			throw new \Nette\InvalidArgumentException("Invalid render type {$type}.");
 		}
 
-		$this->initialized = TRUE;
-		$usedPrimary = FALSE;
+		$this->type = $type;
+
+		return $this;
+	}
+
+	/**
+	 * @param string $templatePath
+	 * @return self
+	 */
+	public function setTemplatePath($templatePath = NULL)
+	{
+		$this->templatePath = $templatePath;
+
+		return $this;
+	}
+
+	/**
+	 * @param Form $form
+	 * @param string $mode
+	 * @return string
+	 */
+	public function render(Form $form, $mode = NULL)
+	{
+		$this->form = $form;
+
+		if ($mode !== NULL)
+		{
+			parent::render($form, $mode);
+		}
+
+		$presenter = $form->lookup(\Nette\Application\UI\Presenter::class);
+		/* @var $presenter \Nette\Application\UI\Presenter */
+
+		$template = $presenter->getTemplateFactory()->createTemplate();
+		$template->form = $template->_form = $form;
+		$template->renderer = $this;
+
+		if ($this->templatePath == NULL)
+		{
+			$template->setFile(__DIR__ . '/templates/form.latte');
+		}
+		else
+		{
+			$template->setFile($this->templatePath);
+			$template->formTemplate = __DIR__ . '/templates/form.latte';
+		}
+
+		$this->beforeRender();
+
+		$template->render();
+	}
+
+	public function beforeRender()
+	{
+		if ($this->type != self::TYPE_VERTICAL)
+		{
+			$this->form->getElementPrototype()->addClass('form-' . $this->type);
+		}
 
 		foreach ($this->form->getControls() as $control)
 		{
 			if ($control instanceof Controls\Button)
 			{
-				$markAsPrimary = $control === $this->primaryButton || (!isset($this->primary) && !$usedPrimary && $control->parent instanceof Form);
-
-				if ($markAsPrimary)
-				{
-					$class = 'btn btn-primary';
-					$usedPrimary = TRUE;
-				}
-				else
-				{
-					$class = 'btn btn-default';
-				}
-
+				$class = 'btn btn-' . ($control->getOption(self::PRIMARY_BUTTON, FALSE) ? 'primary' : 'default');
 				$control->getControlPrototype()->addClass($class);
 			}
-			else if ($control instanceof Controls\TextBase || $control instanceof Controls\SelectBox || $control instanceof Controls\MultiSelectBox)
+			else if ($control instanceof Controls\TextBase ||
+				$control instanceof Controls\SelectBox ||
+				$control instanceof Controls\MultiSelectBox)
 			{
 				$control->getControlPrototype()->addClass('form-control');
 			}
-			else if ($control instanceof Controls\Checkbox || $control instanceof Controls\CheckboxList || $control instanceof Controls\RadioList)
+			else if ($control instanceof Controls\Checkbox ||
+				$control instanceof Controls\CheckboxList ||
+				$control instanceof Controls\RadioList)
 			{
+				$inline = $control->getOption(self::TYPE_INLINE, FALSE) ? '-inline' : '';
+
 				$control->getSeparatorPrototype()->setName('div')
-					->addClass($control->getControlPrototype()->type);
+					->addClass($control->getControlPrototype()->type . $inline);
 			}
 		}
 	}

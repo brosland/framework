@@ -1,0 +1,27 @@
+{form $form}
+	{block errors}{!$renderer->renderErrors()}{/block}
+	{foreach $form->groups as $group}
+		{var $fieldsetName = $group->getOption('id', $iterator->counter - 1)}
+		<fieldset n:block="fieldset-$fieldsetName" n:if="$group->controls && $group->getOption('visual')" {if $group->getOption('id')}id="{$group->getOption('id')}"{/if}>
+			<legend n:ifset="$group->options['label']">{$group->options['label']}</legend>
+			<p n:ifset="$group->options['description']">{$group->options['description']}</p>
+			{block controls}
+				{var $inButtonGroup = FALSE}
+				{foreach $group->controls as $component}
+					{if !$component->getOption('rendered')}
+						{if !$inButtonGroup && $component instanceof Nette\Forms\Controls\Button}{var $inButtonGroup = TRUE}<div class="form-group form-actions">{/if}
+						{block form-group-$component->name}
+							{if $component instanceof Nette\Forms\Controls\Button || $component instanceOf Nette\Forms\Controls\HiddenField}
+								{input $component}
+							{else}
+								{!$renderer->renderPair($component)}
+							{/if}
+						{/block}
+						{if $inButtonGroup && !$iterator->nextValue instanceof Nette\Forms\Controls\Button}{var $inButtonGroup = FALSE}</div>{/if}
+					{/if}
+				{/foreach}
+			{/block}
+		</fieldset>
+	{/foreach}
+	{include controls, group => $form}
+{/form}

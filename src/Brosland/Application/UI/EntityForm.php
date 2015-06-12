@@ -5,7 +5,7 @@ namespace Brosland\Application\UI;
 use Brosland\Models\Entity,
 	Doctrine\Common\Collections\Collection;
 
-abstract class EntityForm extends Form
+class EntityForm extends Form
 {
 	const PROPERTY = ':property';
 

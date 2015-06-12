@@ -5,7 +5,7 @@ namespace Brosland\Application\UI;
 use Nextras\Forms\Controls,
 	Nette\Forms\Container;
 
-abstract class Form extends \Nette\Application\UI\Form
+class Form extends \Nette\Application\UI\Form
 {
 
 	public function __construct()
