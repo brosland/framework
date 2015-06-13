@@ -12,7 +12,7 @@ class Form extends \Nette\Application\UI\Form
 	{
 		parent::__construct();
 
-		$this->setRenderer(new \Brosland\Forms\BootstrapRenderer());
+		$this->setRenderer(new \Brosland\Forms\BootstrapRenderer($this));
 	}
 
 	/**

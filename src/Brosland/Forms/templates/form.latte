@@ -9,7 +9,9 @@
 				{var $inButtonGroup = FALSE}
 				{foreach $group->controls as $component}
 					{if !$component->getOption('rendered')}
-						{if !$inButtonGroup && $component instanceof Nette\Forms\Controls\Button}{var $inButtonGroup = TRUE}<div class="form-group form-actions">{/if}
+						{if !$inButtonGroup && $component instanceof Nette\Forms\Controls\Button}
+							{var $inButtonGroup = TRUE}{!$renderer->renderFormActions('begin')}
+						{/if}
 						{block form-group-$component->name}
 							{if $component instanceof Nette\Forms\Controls\Button || $component instanceOf Nette\Forms\Controls\HiddenField}
 								{input $component}
@@ -17,7 +19,9 @@
 								{!$renderer->renderPair($component)}
 							{/if}
 						{/block}
-						{if $inButtonGroup && !$iterator->nextValue instanceof Nette\Forms\Controls\Button}{var $inButtonGroup = FALSE}</div>{/if}
+						{if $inButtonGroup && !$iterator->nextValue instanceof Nette\Forms\Controls\Button}
+							{var $inButtonGroup = FALSE}{!$renderer->renderFormActions('end')}
+						{/if}
 					{/if}
 				{/foreach}
 			{/block}

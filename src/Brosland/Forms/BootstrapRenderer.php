@@ -9,23 +9,28 @@ use Nette\Forms\Rendering\DefaultFormRenderer,
 class BootstrapRenderer extends DefaultFormRenderer
 {
 	const PRIMARY_BUTTON = 'btn-primary';
-	const TYPE_VERTICAL = 'vertical',
-		TYPE_HORIZONTAL = 'horizontal',
-		TYPE_INLINE = 'inline';
+	const VIEW_VERTICAL = 'vertical',
+		VIEW_HORIZONTAL = 'horizontal',
+		VIEW_INLINE = 'inline';
 
 
 	/**
 	 * @var string
 	 */
-	private $type = self::TYPE_HORIZONTAL;
+	private $view = self::VIEW_VERTICAL;
 	/**
-	 * @var string
+	 * @var \Nette\Application\UI\ITemplate
 	 */
-	private $templatePath = NULL;
+	private $template = NULL;
 
 
-	public function __construct()
+	/**
+	 * @param Form $form
+	 */
+	public function __construct(Form $form)
 	{
+		$this->form = $form;
+
 		$this->wrappers['controls']['container'] = NULL;
 		$this->wrappers['pair']['container'] = 'div class="form-group"';
 		$this->wrappers['pair']['.error'] = 'has-error';
@@ -36,31 +41,36 @@ class BootstrapRenderer extends DefaultFormRenderer
 	}
 
 	/**
-	 * @param type $type
+	 * @param string $view
 	 * @return self
 	 * @throws \Nette\InvalidArgumentException
 	 */
-	public function setRenderType($type)
+	public function setView($view)
 	{
-		if (!in_array($type, [self::TYPE_HORIZONTAL, self::TYPE_VERTICAL, self::TYPE_INLINE]))
+		if (!in_array($view, [self::VIEW_HORIZONTAL, self::VIEW_VERTICAL, self::VIEW_INLINE]))
 		{
-			throw new \Nette\InvalidArgumentException("Invalid render type {$type}.");
+			throw new \Nette\InvalidArgumentException("Invalid view {$view}.");
 		}
 
-		$this->type = $type;
+		$this->view = $view;
 
 		return $this;
 	}
 
 	/**
-	 * @param string $templatePath
-	 * @return self
+	 * @return \Nette\Application\UI\ITemplate
 	 */
-	public function setTemplatePath($templatePath = NULL)
+	public function getTemplate()
 	{
-		$this->templatePath = $templatePath;
+		if ($this->template == NULL)
+		{
+			$presenter = $this->form->lookup(\Nette\Application\UI\Presenter::class);
+			/* @var $presenter \Nette\Application\UI\Presenter */
 
-		return $this;
+			$this->template = $presenter->getTemplateFactory()->createTemplate();
+		}
+
+		return $this->template;
 	}
 
 	/**
@@ -77,20 +87,17 @@ class BootstrapRenderer extends DefaultFormRenderer
 			parent::render($form, $mode);
 		}
 
-		$presenter = $form->lookup(\Nette\Application\UI\Presenter::class);
-		/* @var $presenter \Nette\Application\UI\Presenter */
-
-		$template = $presenter->getTemplateFactory()->createTemplate();
+		$template = $this->getTemplate();
 		$template->form = $template->_form = $form;
 		$template->renderer = $this;
+		$template->view = $this->view;
 
-		if ($this->templatePath == NULL)
+		if (!$template->getFile())
 		{
 			$template->setFile(__DIR__ . '/templates/form.latte');
 		}
 		else
 		{
-			$template->setFile($this->templatePath);
 			$template->formTemplate = __DIR__ . '/templates/form.latte';
 		}
 
@@ -101,10 +108,7 @@ class BootstrapRenderer extends DefaultFormRenderer
 
 	public function beforeRender()
 	{
-		if ($this->type != self::TYPE_VERTICAL)
-		{
-			$this->form->getElementPrototype()->addClass('form-' . $this->type);
-		}
+		$this->form->getElementPrototype()->addClass('form-' . $this->view);
 
 		foreach ($this->form->getControls() as $control)
 		{
@@ -123,11 +127,36 @@ class BootstrapRenderer extends DefaultFormRenderer
 				$control instanceof Controls\CheckboxList ||
 				$control instanceof Controls\RadioList)
 			{
-				$inline = $control->getOption(self::TYPE_INLINE, FALSE) ? '-inline' : '';
+				$inline = $control->getOption(self::VIEW_INLINE, FALSE) ? '-inline' : '';
 
 				$control->getSeparatorPrototype()->setName('div')
 					->addClass($control->getControlPrototype()->type . $inline);
 			}
+		}
+	}
+
+	/**
+	 * @param string $part
+	 * @return \Nette\Utils\Html
+	 */
+	public function renderFormActions($part)
+	{
+		$formActions = $this->getWrapper('pair container');
+		$formActions->addClass('form-actions');
+
+		$labelContainer = $this->getWrapper('label container');
+		$formActions->add($labelContainer);
+
+		$controlContainer = $this->getWrapper('control container');
+		$formActions->add($controlContainer);
+
+		if ($part == 'begin')
+		{
+			return $formActions->startTag() . $labelContainer . $controlContainer->startTag();
+		}
+		else
+		{
+			return $controlContainer->endTag() . $formActions->endTag();
 		}
 	}
 }
