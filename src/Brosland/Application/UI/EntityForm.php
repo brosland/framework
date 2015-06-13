@@ -2,7 +2,7 @@
 
 namespace Brosland\Application\UI;
 
-use Brosland\Models\Entity,
+use Kdyby\Doctrine\Entities\BaseEntity,
 	Doctrine\Common\Collections\Collection;
 
 class EntityForm extends Form
@@ -15,7 +15,7 @@ class EntityForm extends Form
 	 */
 	private $entityFactory = NULL;
 	/**
-	 * @var Entity
+	 * @var BaseEntity
 	 */
 	private $entity = NULL;
 
@@ -57,7 +57,7 @@ class EntityForm extends Form
 	}
 
 	/**
-	 * @return Entity
+	 * @return BaseEntity
 	 */
 	public function getEntity()
 	{
@@ -65,9 +65,9 @@ class EntityForm extends Form
 	}
 
 	/**
-	 * @param Entity $entity
+	 * @param BaseEntity $entity
 	 */
-	public function bindEntity(Entity $entity)
+	public function bindEntity(BaseEntity $entity)
 	{
 		$this->entity = $entity;
 
@@ -86,13 +86,13 @@ class EntityForm extends Form
 
 			$value = $this->getPropertyValue($control->getOption(self::PROPERTY));
 
-			if ($value instanceof Entity)
+			if ($value instanceof BaseEntity)
 			{
 				$value = $value->getId();
 			}
 			else if ($value instanceof Collection)
 			{
-				$value = array_map(function(Entity $entity)
+				$value = array_map(function(BaseEntity $entity)
 				{
 					return $entity->getId();
 				}, $value->toArray());

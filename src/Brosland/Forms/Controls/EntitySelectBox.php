@@ -2,7 +2,7 @@
 
 namespace Brosland\Forms\Controls;
 
-use Brosland\Models\Entity,
+use Kdyby\Doctrine\Entities\BaseEntity,
 	Nette\Utils\Callback;
 
 class EntitySelectBox extends \Nette\Forms\Controls\SelectBox
@@ -19,7 +19,7 @@ class EntitySelectBox extends \Nette\Forms\Controls\SelectBox
 
 	/**
 	 * @param string $label
-	 * @param Entity[] $entities
+	 * @param BaseEntity[] $entities
 	 */
 	public function __construct($label = NULL, array $entities = NULL)
 	{
@@ -32,12 +32,12 @@ class EntitySelectBox extends \Nette\Forms\Controls\SelectBox
 	}
 
 	/**
-	 * @param int|Entity|NULL $value
+	 * @param int|BaseEntity|NULL $value
 	 * @return self
 	 */
 	public function setValue($value)
 	{
-		if ($value instanceof Entity)
+		if ($value instanceof BaseEntity)
 		{
 			$value = $value->getId();
 		}
@@ -48,12 +48,12 @@ class EntitySelectBox extends \Nette\Forms\Controls\SelectBox
 	}
 
 	/**
-	 * @param int|Entity|NULL $value
+	 * @param int|BaseEntity|NULL $value
 	 * @return self
 	 */
 	public function setDefaultValue($value)
 	{
-		if ($value instanceof Entity)
+		if ($value instanceof BaseEntity)
 		{
 			$value = $value->getId();
 		}
@@ -72,7 +72,7 @@ class EntitySelectBox extends \Nette\Forms\Controls\SelectBox
 	}
 
 	/**
-	 * @param Entity[] $entities
+	 * @param BaseEntity[] $entities
 	 * @param bool $useKeys
 	 * @return self
 	 */
