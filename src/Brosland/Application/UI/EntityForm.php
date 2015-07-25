@@ -3,7 +3,8 @@
 namespace Brosland\Application\UI;
 
 use Kdyby\Doctrine\Entities\BaseEntity,
-	Doctrine\Common\Collections\Collection;
+	Doctrine\Common\Collections\Collection,
+	Nette\Utils\Callback;
 
 class EntityForm extends Form
 {
@@ -33,7 +34,7 @@ class EntityForm extends Form
 					return;
 				}
 
-				$this->entity = \Nette\Utils\Callback::invokeArgs($this->entityFactory, array ($this));
+				$this->entity = Callback::invokeArgs($this->entityFactory, [$this]);
 			}
 
 			$this->updateEntity();
@@ -104,14 +105,15 @@ class EntityForm extends Form
 
 	private function updateEntity()
 	{
+		$values = $this->getValues();
+
 		foreach ($this->getComponents(TRUE, \Nette\Forms\IControl::class) as $control)
 		{
-			if ($control->getOption(self::PROPERTY))
-			{
-				$value = $control instanceof \Brosland\Forms\Controls\EntitySelectBox ?
-					$control->getSelectedItem() : $control->getValue();
+			$property = $control->getOption(self::PROPERTY);
 
-				$this->setPropertyValue($control->getOption(self::PROPERTY), $value);
+			if ($property !== NULL)
+			{
+				$this->setPropertyValue($property, $values[$control->getName()]);
 			}
 		}
 	}
