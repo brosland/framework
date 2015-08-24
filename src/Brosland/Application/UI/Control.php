@@ -2,18 +2,12 @@
 
 namespace Brosland\Application\UI;
 
-use Nette\Localization\ITranslator;
-
 abstract class Control extends \Nette\Application\UI\Control
 {
 	/**
 	 * @var string
 	 */
 	protected $view = 'default';
-	/**
-	 * @var \Nette\Localization\ITranslator
-	 */
-	protected $translator = NULL;
 
 
 	/**
@@ -45,7 +39,8 @@ abstract class Control extends \Nette\Application\UI\Control
 	 * @param array|mixed
 	 * @return void
 	 */
-	public function refresh($snippets = NULL, $destination = 'this', $args = array ())
+	public function refresh($snippets = NULL, $destination = 'this',
+		$args = array ())
 	{
 		if ($this->presenter->isAjax())
 		{
@@ -68,14 +63,6 @@ abstract class Control extends \Nette\Application\UI\Control
 	}
 
 	/**
-	 * @param \Nette\Localization\ITranslator $translator
-	 */
-	public function setTranslator(ITranslator $translator = NULL)
-	{
-		$this->translator = $translator;
-	}
-
-	/**
 	 * @param string $view
 	 * @return self
 	 */
@@ -84,6 +71,26 @@ abstract class Control extends \Nette\Application\UI\Control
 		$this->view = $view;
 
 		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function formatTemplatePath()
+	{
+		$reflection = $this->getReflection();
+		$className = $reflection->getShortName();
+
+		return dirname($reflection->getFileName()) . '/../templates/components/'
+			. $className . '/' . $this->view . '.latte';
+	}
+
+	protected function beforeRender()
+	{
+		if (!$this->template->getFile())
+		{
+			$this->template->setFile($this->formatTemplatePath());
+		}
 	}
 
 	public function render()
@@ -98,36 +105,5 @@ abstract class Control extends \Nette\Application\UI\Control
 		}
 
 		$this->template->render();
-	}
-
-	protected function beforeRender()
-	{
-		$reflection = $this->getReflection();
-		$className = $reflection->getName();
-
-		$name = substr($className, strrpos($className, '\\') + 1, -7); // -7 = strlen('Control')
-		$templatePath = dirname($reflection->getFileName())
-			. '/../templates/components/' . ucfirst($name) . '/' . $this->view . '.latte';
-
-		if (file_exists($templatePath))
-		{
-			$this->template->setFile($templatePath);
-		}
-	}
-
-	/**
-	 * @param string $name
-	 * @return \Nette\ComponentModel\IComponent
-	 */
-	protected function createComponent($name)
-	{
-		$component = parent::createComponent($name);
-
-		if ($component instanceof Control || $component instanceof Form)
-		{
-			$component->setTranslator($this->translator);
-		}
-
-		return $component;
 	}
 }

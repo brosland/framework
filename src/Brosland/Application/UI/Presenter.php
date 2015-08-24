@@ -47,7 +47,7 @@ abstract class Presenter extends \Nette\Application\UI\Presenter
 	 * @param array|mixed
 	 * @return void
 	 */
-	public function refresh($snippets = NULL, $destination = 'this', $args = array ())
+	public function refresh($snippets = NULL, $destination = 'this', $args = [])
 	{
 		if ($this->isAjax())
 		{
@@ -67,42 +67,5 @@ abstract class Presenter extends \Nette\Application\UI\Presenter
 		{
 			$this->redirect($destination, $args);
 		}
-	}
-
-	/**
-	 * @param string $link
-	 * @param mixed $expiration
-	 * @return string
-	 */
-	public function storeLink($link, $expiration = '+ 10 minutes')
-	{
-		$session = $this->getSession('Nette.Application/requests');
-
-		do
-		{
-			$key = \Nette\Utils\Strings::random(5);
-		}
-		while (isset($session[$key]));
-
-		$session[$key] = array ($this->getUser()->getId(), $link);
-		$session->setExpiration($expiration, $key);
-
-		return $key;
-	}
-
-	/**
-	 * @param string $name
-	 * @return \Nette\ComponentModel\IComponent
-	 */
-	protected function createComponent($name)
-	{
-		$component = parent::createComponent($name);
-
-		if ($component instanceof Control || $component instanceof Form)
-		{
-			$component->setTranslator($this->translator);
-		}
-
-		return $component;
 	}
 }
