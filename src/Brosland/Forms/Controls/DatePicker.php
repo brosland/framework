@@ -2,71 +2,73 @@
 
 namespace Brosland\Forms\Controls;
 
-use Nette\Application\UI\Form,
+use DateTime,
+	Nette\Application\UI\Form,
 	Nette\Forms\Controls\TextInput;
 
 class DatePicker extends TextInput
 {
-	/** @var string */
-	private $format = 'd.m.Y';
-	/** @var string */
-	private $formatLabel = 'dd.mm.rrrr';
-	/** @var array */
-	private static $formatPhpToJs = array (
-		'd' => 'dd',
-		'j' => 'd',
-		'm' => 'mm',
-		'n' => 'm',
-		'z' => 'o',
-		'Y' => 'yy',
-		'y' => 'y',
-		'U' => '@',
-		'h' => 'h',
-		'H' => 'hh',
-		'g' => 'g',
-		'A' => 'TT',
-		'i' => 'mm',
-		's' => 'ss',
-		'G' => 'h',
-	);
+	/**
+	 * @var string
+	 */
+	private $format = 'd/m/Y';
+	/**
+	 * @var array
+	 */
+	private static $JS_DATE_FORMATS = [
+		'd' => 'dd', 'j' => 'd', 'm' => 'mm', 'n' => 'm', 'z' => 'o',
+		'Y' => 'yyyy', 'y' => 'y', 'U' => '@', 'h' => 'h', 'H' => 'hh',
+		'g' => 'g', 'A' => 'TT', 'i' => 'mm', 's' => 'ss', 'G' => 'h'
+	];
 
 
 	/**
-	 * @param string
-	 * @param int
-	 * @param int
+	 * @param string $label
 	 * @return Forms\Controls\DatePicker
 	 */
-	public function __construct($label = NULL, $cols = NULL, $maxLength = NULL)
+	public function __construct($label = NULL)
 	{
-		parent::__construct($label, $cols, $maxLength);
-
-		$this->control->class('datepicker');
-		$this->control->data('datepicker-dateformat', $this->translateFormatToJs($this->format));
+		parent::__construct($label);
 
 		$this->addCondition(Form::FILLED)
 			->addRule(function($control)
 			{
-				return $control->getValue() instanceof \DateTime;
-			}, 'Dátum musí byť zadaný vo formáte "' . $this->formatLabel . '"!');
+				return $control->getValue() instanceof DateTime;
+			}, 'brosland.forms.datePicker.invalidDate');
 	}
 
 	/**
-	 * @param string
-	 * @return string
+	 * @param string $format
+	 * @return self
 	 */
-	protected function translateFormatToJs($format)
+	public function setDateFormat($format)
 	{
-		return str_replace(array_keys(static::$formatPhpToJs), array_values(static::$formatPhpToJs), $this->translate($format));
+		$this->format = $format;
+
+		return $this;
 	}
 
 	/**
-	 * @return \DateTime|NULL
+	 * @param string|DateTime $value
+	 * @return self
+	 */
+	public function setDefaultValue($value = NULL)
+	{
+		if ($value instanceof DateTime)
+		{
+			$value = $value->format($this->format);
+		}
+
+		return parent::setDefaultValue($value);
+	}
+
+	/**
+	 * @return DateTime|NULL
 	 */
 	public function getValue()
 	{
-		$value = \DateTime::createFromFormat($this->format, parent::getValue());
-		$err = \DateTime::getLastErrors();
+		$value = DateTime::createFromFormat($this->format, parent::getValue());
+		$err = DateTime::getLastErrors();
 
 		if ($err['error_count'])
 		{
@@ -77,33 +79,38 @@ class DatePicker extends TextInput
 	}
 
 	/**
-	 * @param \DateTime
-	 * @return BaseDateTime
+	 * @param string|DateTime $value
+	 * @return self
 	 */
 	public function setValue($value = NULL)
 	{
-		try
+		if ($value instanceof DateTime)
 		{
-			if ($value instanceof \DateTime)
-			{
-				return parent::setValue($value->format($this->format));
-			}
-			else
-			{
-				return parent::setValue($value);
-			}
+			$value = $value->format($this->format);
 		}
-		catch (\Exception $e)
-		{
-			return parent::setValue(NULL);
-		}
+
+		return parent::setValue($value);
 	}
 
 	/**
-	 * @return bool
+	 * Generates control's HTML element.
+	 * @return Nette\Utils\Html
 	 */
-	public function isFilled()
+	public function getControl()
 	{
-		return (bool) parent::getValue();
+		$control = parent::getControl();
+		$control->class[] = 'datepicker';
+		$control->data('datepicker-format', $this->translateFormatToJs($this->format));
+
+		return $control;
+	}
+
+	/**
+	 * @param string $format
+	 * @return string
+	 */
+	protected function translateFormatToJs($format)
+	{
+		return str_replace(array_keys(static::$JS_DATE_FORMATS), array_values(static::$JS_DATE_FORMATS), $this->translate($format));
 	}
 }

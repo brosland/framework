@@ -46,11 +46,7 @@ Container::extensionMethod('addEntitySelect', function (Container $container, $n
 });
 Container::extensionMethod('addDatePicker', function (Container $container, $name, $label = NULL)
 {
-	return $container[$name] = new Controls\DatePicker($label);
-});
-Container::extensionMethod('addDateTimePicker', function (Container $container, $name, $label = NULL)
-{
-	return $container[$name] = new Controls\DateTimePicker($label);
+	return $container[$name] = new \Brosland\Forms\Controls\DatePicker($label);
 });
 Container::extensionMethod('addTypeahead', function(Container $container, $name, $label = NULL, $callback = NULL)
 {
