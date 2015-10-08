@@ -13,7 +13,11 @@ class Preferences extends \Nette\Object
 	/**
 	 * @var array
 	 */
-	private $defaults = array ();
+	private $defaults = [];
+	/**
+	 * @var PreferenceEntity[]
+	 */
+	private $changedPreferences = [];
 
 
 	/**
@@ -25,28 +29,28 @@ class Preferences extends \Nette\Object
 	}
 
 	/**
-	 * @param array $defaults
+	 * @param string $name
+	 * @param mixed $value
+	 * @return self
 	 */
-	public function setDefaultValues(array $defaults)
+	public function addDefaultPreference($name, $value)
 	{
-		$this->defaults = array_merge($this->defaults, $defaults);
+		$this->defaults[$name] = $value;
+
+		return $this;
 	}
 
 	/**
 	 * @param string $name
-	 * @param mixin $defaultValue
+	 * @return mixed
 	 */
-	public function getPreference($name, $defaultValue = NULL)
+	public function getPreference($name)
 	{
-		$preference = $this->preferenceDao->findOneBy(array ('name' => $name));
+		$preference = $this->preferenceDao->findOneBy(['name' => $name]);
 
 		if ($preference)
 		{
 			return $preference->getValue();
-		}
-		else if ($defaultValue !== NULL)
-		{
-			return $defaultValue;
 		}
 		else
 		{
@@ -57,10 +61,11 @@ class Preferences extends \Nette\Object
 	/**
 	 * @param string $name
 	 * @param mixin $value
+	 * @return self
 	 */
 	public function setPreference($name, $value = NULL)
 	{
-		$preference = $this->preferenceDao->findOneBy(array ('name' => $name));
+		$preference = $this->preferenceDao->findOneBy(['name' => $name]);
 
 		if ($value !== NULL)
 		{
@@ -70,11 +75,30 @@ class Preferences extends \Nette\Object
 			}
 
 			$preference->setValue($value);
-			$this->preferenceDao->save($preference);
+
+			$this->changedPreferences[] = $preference;
+			$this->preferenceDao->getEntityManager()->persist($preference);
 		}
 		else if ($preference)
 		{
-			$this->preferenceDao->delete($preference);
+			$this->changedPreferences[] = $preference;
+			$this->preferenceDao->getEntityManager()->remove($preference);
 		}
+
+		return $this;
+	}
+
+	/**
+	 * @return self
+	 */
+	public function save()
+	{
+		if (!empty($this->changedPreferences))
+		{
+			$this->preferenceDao->getEntityManager()->flush($this->changedPreferences);
+			$this->changedPreferences = [];
+		}
+
+		return $this;
 	}
 }
