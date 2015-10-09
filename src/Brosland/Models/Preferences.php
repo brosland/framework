@@ -56,6 +56,15 @@ class Preferences extends \Nette\Object
 		$this->preferences = array_merge($this->preferences, $result);
 
 		$pattern = "/^{$domain}\.?(.*)$/";
+
+		foreach ($this->defaults as $name => $value)
+		{
+			if (preg_match($pattern, $name) && !isset($result[$name]))
+			{
+				$result[$name] = $value;
+			}
+		}
+
 		$preferences = [];
 
 		foreach ($result as $name => $preference)
@@ -65,7 +74,8 @@ class Preferences extends \Nette\Object
 				$name = preg_filter($pattern, '$1', $name);
 			}
 
-			$preferences[$name] = $preference->getValue();
+			$preferences[$name] = $preference instanceof PreferenceEntity ?
+				$preference->getValue() : $preference;
 		}
 
 		return $preferences;
