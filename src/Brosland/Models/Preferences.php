@@ -33,9 +33,16 @@ class Preferences extends \Nette\Object
 	 * @param mixed $value
 	 * @return self
 	 */
-	public function addDefaultPreference($name, $value)
+	public function setDefaultPreference($name, $value)
 	{
-		$this->defaults[$name] = $value;
+		if ($value === NULL && isset($this->defaults[$name]))
+		{
+			unset($this->defaults[$name]);
+		}
+		else
+		{
+			$this->defaults[$name] = $value;
+		}
 
 		return $this;
 	}
