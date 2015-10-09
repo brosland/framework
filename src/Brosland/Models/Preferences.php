@@ -17,7 +17,7 @@ class Preferences extends \Nette\Object
 	/**
 	 * @var PreferenceEntity[]
 	 */
-	private $changedPreferences = [];
+	private $preferences = [], $changedPreferences = [];
 
 
 	/**
@@ -41,12 +41,43 @@ class Preferences extends \Nette\Object
 	}
 
 	/**
+	 * @param string $domain
+	 * @param bool $indexWithoutDomain
+	 * @return mixed
+	 */
+	public function getPreferences($domain, $indexWithoutDomain = FALSE)
+	{
+		$query = $this->preferenceDao->createQueryBuilder('preference', 'preference.name');
+		$query->where('preference.name LIKE :domain')
+			->setParameter('domain', $domain . '%');
+
+		$result = $query->getQuery()->getResult();
+
+		$this->preferences = array_merge($this->preferences, $result);
+
+		$pattern = "/^{$domain}\.?(.*)$/";
+		$preferences = [];
+
+		foreach ($result as $name => $preference)
+		{
+			if ($indexWithoutDomain)
+			{
+				$name = preg_filter($pattern, '$1', $name);
+			}
+
+			$preferences[$name] = $preference->getValue();
+		}
+
+		return $preferences;
+	}
+
+	/**
 	 * @param string $name
 	 * @return mixed
 	 */
 	public function getPreference($name)
 	{
-		$preference = $this->preferenceDao->findOneBy(['name' => $name]);
+		$preference = $this->loadPreference($name);
 
 		if ($preference)
 		{
@@ -65,7 +96,7 @@ class Preferences extends \Nette\Object
 	 */
 	public function setPreference($name, $value = NULL)
 	{
-		$preference = $this->preferenceDao->findOneBy(['name' => $name]);
+		$preference = $this->loadPreference($name);
 
 		if ($value !== NULL)
 		{
@@ -76,11 +107,17 @@ class Preferences extends \Nette\Object
 
 			$preference->setValue($value);
 
-			$this->changedPreferences[] = $preference;
 			$this->preferenceDao->getEntityManager()->persist($preference);
+
+			$this->preferences[] = $this->changedPreferences[] = $preference;
 		}
 		else if ($preference)
 		{
+			if (isset($this->preferences[$name]))
+			{
+				unset($this->preferences[$name]);
+			}
+
 			$this->changedPreferences[] = $preference;
 			$this->preferenceDao->getEntityManager()->remove($preference);
 		}
@@ -100,5 +137,19 @@ class Preferences extends \Nette\Object
 		}
 
 		return $this;
+	}
+
+	/**
+	 * @param string $name
+	 * @return PreferenceEntity
+	 */
+	private function loadPreference($name)
+	{
+		if (isset($this->preferences[$name]))
+		{
+			return $this->preferences[$name];
+		}
+
+		return $this->preferenceDao->findOneBy(['name' => $name]);
 	}
 }
