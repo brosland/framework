@@ -2,8 +2,11 @@
 
 namespace Brosland\Application\UI;
 
+use Nette\Utils\Strings;
+
 abstract class Presenter extends \Nette\Application\UI\Presenter
 {
+
 	/**
 	 * @persistent
 	 * @var string
@@ -20,7 +23,7 @@ abstract class Presenter extends \Nette\Application\UI\Presenter
 	{
 		if ($this->user->isLoggedIn())
 		{
-			$this->error('common.accessDenied.', 403);
+			$this->error('common.accessDenied', 403);
 		}
 
 		if ($this->user->getLogoutReason() === \Nette\Security\User::INACTIVITY)
@@ -66,6 +69,45 @@ abstract class Presenter extends \Nette\Application\UI\Presenter
 		else if ($destination)
 		{
 			$this->redirect($destination, $args);
+		}
+	}
+
+	/**
+	 * @param string $name
+	 * @return \Nette\ComponentModel\IComponent
+	 */
+	protected function createComponent($name = NULL)
+	{
+		$method = 'createComponent' . ucfirst($name);
+		$rc = $this->getReflection()->getMethod($method);
+
+		$this->checkRequirements($rc);
+
+		return parent::createComponent($name);
+	}
+
+	/**
+	 * @param \Nette\Reflection\Method $element
+	 * @throws \Nette\Application\ForbiddenRequestException
+	 */
+	public function checkRequirements($element)
+	{
+		parent::checkRequirements($element);
+
+		if ($element instanceof \Nette\Reflection\Method)
+		{
+			$method = $element->getName();
+
+			if (Strings::match($method, '/^createComponent|handle/') !== NULL &&
+				$element->hasAnnotation('action'))
+			{
+				$action = (array) $element->getAnnotation('action');
+
+				if (!in_array($this->getAction(), $action, TRUE))
+				{
+					throw new \Nette\Application\ForbiddenRequestException();
+				}
+			}
 		}
 	}
 }
