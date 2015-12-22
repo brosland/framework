@@ -2,15 +2,13 @@
 
 namespace Brosland\DI;
 
-use Brosland\Models\PreferenceEntity,
-	Brosland\Security\Models\PrivilegeEntity,
-	Brosland\Security\Models\RoleEntity,
-	Kdyby\Doctrine\DI\IEntityProvider,
-	Nette\DI\Statement;
+use Kdyby\Doctrine\DI\IEntityProvider;
 
 class BroslandExtension extends \Nette\DI\CompilerExtension implements IEntityProvider
 {
+
 	const TAG_MODULE_ROUTER = 'brosland.moduleRouter';
+
 
 	/**
 	 * @var array
@@ -47,19 +45,12 @@ class BroslandExtension extends \Nette\DI\CompilerExtension implements IEntityPr
 			->setAutowired(FALSE);
 
 		$builder->addDefinition($this->prefix('authorizator'))
-			->setClass(\Brosland\Security\Authorizator::class)
-			->setArguments(array (
-				new Statement('@doctrine.dao', array (PrivilegeEntity::class)),
-				new Statement('@doctrine.dao', array (RoleEntity::class))
-			))
+			->setClass(\Brosland\Authorizator::class)
 			->addSetup('addPrivilegeDefinitions', array ($config['security']['privileges']))
 			->addSetup('addRoleDefinitions', array ($config['security']['roles']));
 
 		$builder->addDefinition($this->prefix('preferences'))
-			->setClass(\Brosland\Models\Preferences::class)
-			->setArguments(array (
-				new Statement('@doctrine.dao', array (PreferenceEntity::class)),
-		));
+			->setClass(\Brosland\Preferences::class);
 
 		$builder->addDefinition($this->prefix('pageConfig'))
 			->setClass(PageConfiguration::class)
@@ -73,15 +64,15 @@ class BroslandExtension extends \Nette\DI\CompilerExtension implements IEntityPr
 		$builder = $this->getContainerBuilder();
 
 		$router = $builder->getDefinition('router');
-		
+
 		$moduleRouters = array_keys($builder->findByTag(self::TAG_MODULE_ROUTER));
-		
+
 		foreach ($moduleRouters as $serviceName)
 		{
-			$router->addSetup('offsetSet', array(NULL, '@' . $serviceName));
+			$router->addSetup('offsetSet', array (NULL, '@' . $serviceName));
 		}
 
-		$router->addSetup('offsetSet', array(NULL, $this->prefix('@router')));
+		$router->addSetup('offsetSet', array (NULL, $this->prefix('@router')));
 	}
 
 	/**
@@ -89,6 +80,6 @@ class BroslandExtension extends \Nette\DI\CompilerExtension implements IEntityPr
 	 */
 	public function getEntityMappings()
 	{
-		return array ('Brosland' => __DIR__ . '/../');
+		return array ('Brosland' => __DIR__ . '/../Entities');
 	}
 }

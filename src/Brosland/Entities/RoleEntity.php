@@ -1,6 +1,6 @@
 <?php
 
-namespace Brosland\Security\Models;
+namespace Brosland\Entities;
 
 use Doctrine\Common\Collections\ArrayCollection,
 	Doctrine\ORM\Mapping as ORM;
@@ -9,8 +9,11 @@ use Doctrine\Common\Collections\ArrayCollection,
  * @ORM\Entity
  * @ORM\Table(name="Role")
  */
-class RoleEntity extends \Brosland\Models\Entity implements \Nette\Security\IRole
+class RoleEntity implements \Nette\Security\IRole
 {
+	use \Kdyby\Doctrine\Entities\Attributes\Identifier,
+	 \Kdyby\Doctrine\Entities\MagicAccessors;
+
 	/**
 	 * @ORM\Column(length=64, unique=TRUE)
 	 * @var string
@@ -27,11 +30,14 @@ class RoleEntity extends \Brosland\Models\Entity implements \Nette\Security\IRol
 	 */
 	private $static = FALSE;
 	/**
-	 * @ORM\ManyToMany(targetEntity="Brosland\Security\Models\PrivilegeEntity", cascade="ALL", fetch="EAGER")
+	 * @ORM\ManyToMany(
+	 * 		targetEntity="Brosland\Entities\PrivilegeEntity",
+	 * 		cascade={"persist", "remove"}, fetch="EAGER"
+	 * )
 	 * @ORM\JoinTable(
-	 * 	name="RolePrivilege",
-	 * 	joinColumns={@ORM\JoinColumn(name="role_id", referencedColumnName="id", onDelete="CASCADE")},
-	 * 	inverseJoinColumns={@ORM\JoinColumn(name="privilege_id", referencedColumnName="id", onDelete="CASCADE")}
+	 * 		name="RolePrivilege",
+	 * 		joinColumns={@ORM\JoinColumn(name="role_id", referencedColumnName="id", onDelete="CASCADE")},
+	 * 		inverseJoinColumns={@ORM\JoinColumn(name="privilege_id", referencedColumnName="id", onDelete="CASCADE")}
 	 * )
 	 * @var ArrayCollection
 	 */
@@ -109,19 +115,16 @@ class RoleEntity extends \Brosland\Models\Entity implements \Nette\Security\IRol
 	 */
 	public function getPrivileges()
 	{
-		return $this->privileges;
+		return $this->privileges->toArray();
 	}
 
 	/**
-	 * @param PrivilegeEntity[] $privileges
+	 * @param PrivilegeEntity[] $privilege
 	 * @return self
 	 */
-	public function addPrivileges($privileges)
+	public function addPrivilege(PrivilegeEntity $privilege)
 	{
-		foreach ($privileges as $privilege)
-		{
-			$this->privileges->add($privilege);
-		}
+		$this->privileges->add($privilege);
 
 		return $this;
 	}

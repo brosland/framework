@@ -1,6 +1,6 @@
 <?php
 
-namespace Brosland\Application\UI;
+namespace Brosland\UI;
 
 abstract class Control extends \Nette\Application\UI\Control
 {

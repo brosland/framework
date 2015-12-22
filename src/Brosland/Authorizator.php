@@ -1,36 +1,27 @@
 <?php
 
-namespace Brosland\Security;
+namespace Brosland;
 
-use Brosland\Security\Models\PrivilegeEntity,
-	Brosland\Security\Models\RoleEntity,
-	Kdyby\Doctrine\EntityDao,
+use Brosland\Entities\PrivilegeEntity,
+	Brosland\Entities\RoleEntity,
+	Kdyby\Doctrine\EntityManager,
 	Nette\Security\Permission;
 
 class Authorizator extends Permission
 {
+
 	/**
 	 * @var array
 	 */
-	public static $DEFAULT_ROLES = array (
-		'guest', 'authenticated'
-	);
+	public static $DEFAULT_ROLES = ['guest', 'authenticated'];
 	/**
-	 * @var EntityDao
+	 * @var \Kdyby\Doctrine\EntityDao
 	 */
-	private $privilegeDao;
-	/**
-	 * @var EntityDao
-	 */
-	private $roleDao;
+	private $privilegeDao, $roleDao;
 	/**
 	 * @var array
 	 */
-	private $privilegeDefinitions = array ();
-	/**
-	 * @var array
-	 */
-	private $roleDefinitions = array ();
+	private $privilegeDefinitions = [], $roleDefinitions = [];
 	/**
 	 * @var bool
 	 */
@@ -38,13 +29,12 @@ class Authorizator extends Permission
 
 
 	/**
-	 * @param EntityDao $privilegeDao
-	 * @param EntityDao $roleDao
+	 * @param EntityManager $entityManager
 	 */
-	public function __construct(EntityDao $privilegeDao, EntityDao $roleDao)
+	public function __construct(EntityManager $entityManager)
 	{
-		$this->privilegeDao = $privilegeDao;
-		$this->roleDao = $roleDao;
+		$this->privilegeDao = $entityManager->getRepository(PrivilegeEntity::class);
+		$this->roleDao = $entityManager->getRepository(RoleEntity::class);
 	}
 
 	public function init()
@@ -55,9 +45,9 @@ class Authorizator extends Permission
 		}
 
 		$roles = $this->roleDao->createQueryBuilder('role')
-			->addSelect('privilege')
-			->leftJoin('role.privileges', 'privilege')
-			->getQuery()->execute();
+				->addSelect('privilege')
+				->leftJoin('role.privileges', 'privilege')
+				->getQuery()->execute();
 		/* @var $roles RoleEntity[] */
 
 		foreach ($roles as $role)
@@ -157,8 +147,9 @@ class Authorizator extends Permission
 		{
 			foreach ($permissions as $name => $label)
 			{
-				$privilegeEntity = $this->privilegeDao->findOneBy(array (
-					'resource' => $resource, 'name' => $name));
+				$privilegeEntity = $this->privilegeDao->findOneBy([
+					'resource' => $resource, 'name' => $name
+				]);
 
 				if (!$privilegeEntity)
 				{
@@ -209,7 +200,7 @@ class Authorizator extends Permission
 
 		foreach ($this->roleDefinitions as $name => $role)
 		{
-			$roleEntity = $this->roleDao->findOneBy(array ('name' => $name));
+			$roleEntity = $this->roleDao->findOneBy(['name' => $name]);
 
 			if (!$roleEntity)
 			{
@@ -220,7 +211,14 @@ class Authorizator extends Permission
 				->setDescription(isset($role['description']) ? $role['description'] : '')
 				->getPrivileges()->clear();
 
-			foreach (isset($role['privileges']) ? $role['privileges'] : array () as $resource => $permissions)
+			$roleEntities[] = $roleEntity;
+
+			if (!isset($role['privileges']))
+			{
+				continue;
+			}
+
+			foreach ($role['privileges'] as $resource => $permissions)
 			{
 				if ($resource == '*')
 				{
@@ -247,8 +245,6 @@ class Authorizator extends Permission
 					}
 				}
 			}
-
-			$roleEntities[] = $roleEntity;
 		}
 
 		return $roleEntities;

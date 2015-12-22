@@ -1,13 +1,15 @@
 <?php
 
-namespace Brosland\Models;
+namespace Brosland;
 
-use Kdyby\Doctrine\EntityDao;
+use Brosland\Entities\PreferenceEntity,
+	Kdyby\Doctrine\EntityManager;
 
 class Preferences extends \Nette\Object
 {
+
 	/**
-	 * @var EntityDao
+	 * @var \Kdyby\Doctrine\EntityDao
 	 */
 	private $preferenceDao;
 	/**
@@ -21,11 +23,11 @@ class Preferences extends \Nette\Object
 
 
 	/**
-	 * @param EntityDao $preferenceDao
+	 * @param EntityDao $entityManager
 	 */
-	public function __construct(EntityDao $preferenceDao)
+	public function __construct(EntityManager $entityManager)
 	{
-		$this->preferenceDao = $preferenceDao;
+		$this->preferenceDao = $entityManager->getRepository(PreferenceEntity::class);
 	}
 
 	/**

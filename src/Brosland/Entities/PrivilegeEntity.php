@@ -1,16 +1,18 @@
 <?php
 
-namespace Brosland\Security\Models;
+namespace Brosland\Entities;
 
-use Brosland\Models\Entity,
-	Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity
  * @ORM\Table(name="Privilege")
  */
-class PrivilegeEntity extends Entity
+class PrivilegeEntity
 {
+	use \Kdyby\Doctrine\Entities\Attributes\Identifier,
+	 \Kdyby\Doctrine\Entities\MagicAccessors;
+
 	/**
 	 * @ORM\Column
 	 * @var string

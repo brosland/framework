@@ -1,6 +1,6 @@
 <?php
 
-namespace Brosland\Application\UI;
+namespace Brosland\UI;
 
 use Nette\Utils\Strings;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Brosland\Application\UI;
+namespace Brosland\UI;
 
 use Nextras\Forms\Controls,
 	Nette\Forms\Container;
@@ -40,15 +40,7 @@ class Form extends \Nette\Application\UI\Form
 }
 \Brosland\Forms\Controls\AntispamControl::register();
 
-Container::extensionMethod('addEntitySelect', function (Container $container, $name, $label = NULL, array $entities = NULL)
-{
-	return $container[$name] = new \Brosland\Forms\Controls\EntitySelectBox($label, $entities);
-});
 Container::extensionMethod('addDatePicker', function (Container $container, $name, $label = NULL)
 {
 	return $container[$name] = new \Brosland\Forms\Controls\DatePicker($label);
-});
-Container::extensionMethod('addTypeahead', function(Container $container, $name, $label = NULL, $callback = NULL)
-{
-	return $container[$name] = new Controls\Typeahead($label, $callback);
 });

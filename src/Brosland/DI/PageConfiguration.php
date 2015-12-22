@@ -4,6 +4,7 @@ namespace Brosland\DI;
 
 class PageConfiguration extends \Nette\Object
 {
+
 	/**
 	 * @var array
 	 */

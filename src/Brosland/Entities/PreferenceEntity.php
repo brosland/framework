@@ -1,6 +1,6 @@
 <?php
 
-namespace Brosland\Models;
+namespace Brosland\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 
@@ -8,8 +8,11 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Entity
  * @ORM\Table(name="Preference")
  */
-class PreferenceEntity extends \Brosland\Models\Entity
+class PreferenceEntity
 {
+	use \Kdyby\Doctrine\Entities\Attributes\Identifier,
+	 \Kdyby\Doctrine\Entities\MagicAccessors;
+
 	/**
 	 * @ORM\Column(unique=TRUE)
 	 * @var string
