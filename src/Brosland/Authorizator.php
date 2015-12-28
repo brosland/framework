@@ -10,10 +10,13 @@ use Brosland\Entities\PrivilegeEntity,
 class Authorizator extends Permission
 {
 
+	const ROLE_GUEST = 'guest', ROLE_AUTHENTICATED = 'authenticated';
+
+
 	/**
-	 * @var array
+	 * @var EntityManager
 	 */
-	public static $DEFAULT_ROLES = ['guest', 'authenticated'];
+	private $entityManager;
 	/**
 	 * @var \Kdyby\Doctrine\EntityDao
 	 */
@@ -21,7 +24,10 @@ class Authorizator extends Permission
 	/**
 	 * @var array
 	 */
-	private $privilegeDefinitions = [], $roleDefinitions = [];
+	private $privilegeDefinitions = [], $roleDefinitions = [
+			self::ROLE_GUEST => ['static' => TRUE],
+			self::ROLE_AUTHENTICATED => ['static' => TRUE]
+	];
 	/**
 	 * @var bool
 	 */
@@ -33,6 +39,7 @@ class Authorizator extends Permission
 	 */
 	public function __construct(EntityManager $entityManager)
 	{
+		$this->entityManager = $entityManager;
 		$this->privilegeDao = $entityManager->getRepository(PrivilegeEntity::class);
 		$this->roleDao = $entityManager->getRepository(RoleEntity::class);
 	}
@@ -69,49 +76,34 @@ class Authorizator extends Permission
 			}
 		}
 
-		foreach (self::$DEFAULT_ROLES as $role)
-		{
-			if (!$this->hasRole($role))
-			{
-				$this->addRole($role);
-			}
-		}
-
 		$this->initialized = TRUE;
 	}
 
 	public function setup()
 	{
-		$entityManager = $this->privilegeDao->getEntityManager();
-
-		try
+		$this->entityManager->transactional(function ()
 		{
-			$entityManager->beginTransaction();
-
 			$privileges = $this->createPrivileges();
 
 			if (!empty($privileges))
 			{
-				$this->privilegeDao->save($privileges);
+				$this->entityManager->persist($privileges);
 			}
 
-			$this->removeInvalidPrivileges($privileges);
+			$invalidPrivileges = $this->findInvalidPrivileges($privileges);
+
+			if (!empty($invalidPrivileges))
+			{
+				$this->entityManager->remove($invalidPrivileges);
+			}
 
 			$roles = $this->createRoles($privileges);
 
 			if (!empty($roles))
 			{
-				$this->roleDao->save($roles);
+				$this->entityManager->persist($roles);
 			}
-
-			$entityManager->commit();
-		}
-		catch (\Exception $ex)
-		{
-			$entityManager->rollback();
-
-			throw $ex;
-		}
+		});
 	}
 
 	/**
@@ -141,34 +133,43 @@ class Authorizator extends Permission
 	 */
 	private function createPrivileges()
 	{
-		$privilegeEntities = array ();
+		$storedPrivileges = $privileges = [];
+		/* @var $storedPrivileges PrivilegeEntity[] */
+
+		foreach ($this->privilegeDao->findAll() as $privilege)
+		/* @var $privilege PrivilegeEntity */
+		{
+			$key = $privilege->getResource() . ':' . $privilege->getName();
+			$storedPrivileges[$key] = $privilege;
+		}
 
 		foreach ($this->privilegeDefinitions as $resource => $permissions)
 		{
 			foreach ($permissions as $name => $label)
 			{
-				$privilegeEntity = $this->privilegeDao->findOneBy([
-					'resource' => $resource, 'name' => $name
-				]);
+				$key = $resource . ':' . $name;
 
-				if (!$privilegeEntity)
+				if (isset($storedPrivileges[$key]))
+				{
+					$privileges[$key] = $storedPrivileges[$key];
+				}
+				else
 				{
 					$privilegeEntity = new PrivilegeEntity($resource, $name, $label);
+					$privilegeEntity->setLabel($label);
+
+					$privileges[$key] = $privilegeEntity;
 				}
-
-				$privilegeEntity->setLabel($label);
-
-				$privilegeEntities[$resource . ':' . $name] = $privilegeEntity;
 			}
 		}
 
-		return $privilegeEntities;
+		return $privileges;
 	}
 
 	/**
 	 * @param PrivilegeEntity[] $privileges
 	 */
-	private function removeInvalidPrivileges(array $privileges)
+	private function findInvalidPrivileges(array $privileges)
 	{
 		$queryBuilder = $this->privilegeDao->createQueryBuilder('privilege');
 
@@ -182,71 +183,62 @@ class Authorizator extends Permission
 			$queryBuilder->where($queryBuilder->expr()->notIn('privilege.id', $ids));
 		}
 
-		$invalidePrivileges = $queryBuilder->getQuery()->getResult();
-
-		if (!empty($invalidePrivileges))
-		{
-			$this->privilegeDao->delete($invalidePrivileges);
-		}
+		return $queryBuilder->getQuery()->getResult();
 	}
 
 	/**
-	 * @param PrivilegeEntity[] $privileges
+	 * @param PrivilegeEntity[] $privilegeEntities
 	 * @return RoleEntity[]
 	 */
-	private function createRoles(array $privileges)
+	private function createRoles(array $privilegeEntities)
 	{
-		$roleEntities = array ();
+		$roles = $this->roleDao->findAssoc([], 'name');
+		/* @var $roles RoleEntity[] */
 
 		foreach ($this->roleDefinitions as $name => $role)
 		{
-			$roleEntity = $this->roleDao->findOneBy(['name' => $name]);
-
-			if (!$roleEntity)
+			if (isset($roles[$name]) && !$roles[$name]->isStatic())
 			{
-				$roleEntity = new RoleEntity($name);
+				continue;
 			}
 
+			$roleEntity = isset($roles[$name]) ? $roles[$name] : new RoleEntity($name);
+			/* @var $roleEntity RoleEntity */
 			$roleEntity->setStatic(isset($role['static']) && $role['static'])
 				->setDescription(isset($role['description']) ? $role['description'] : '')
-				->getPrivileges()->clear();
+				->removePrivileges();
 
-			$roleEntities[] = $roleEntity;
+			$roles[$name] = $roleEntity;
 
 			if (!isset($role['privileges']))
 			{
 				continue;
 			}
 
-			foreach ($role['privileges'] as $resource => $permissions)
+			foreach ($role['privileges'] as $privilege)
 			{
-				if ($resource == '*')
+				list($resource, $permission) = explode(':', $privilege);
+
+				if ($resource === self::ALL && $permission === self::ALL)
 				{
-					$roleEntity->addPrivileges($privileges);
-					break;
+					$roleEntity->addPrivileges($privilegeEntities);
 				}
-
-				$permissions = is_array($permissions) ? $permissions : (array) $permissions;
-
-				foreach ($permissions as $permission)
+				else if ($permission === self::ALL)
 				{
-					if ($permission == '*')
+					$filter = function (PrivilegeEntity $privilege) use ($resource)
 					{
-						$filter = function (PrivilegeEntity $privilege) use ($resource)
-						{
-							return $privilege->getResource() == $resource;
-						};
+						return $privilege->getResource() === $resource;
+					};
 
-						$roleEntity->addPrivileges(array_filter($privileges, $filter));
-					}
-					else // resource-privilege
-					{
-						$roleEntity->getPrivileges()->add($privileges[$resource . ':' . $permission]);
-					}
+					$roleEntity->addPrivileges(array_filter($privilegeEntities, $filter));
+				}
+				else
+				{
+					$roleEntity->addPrivilege($privilegeEntities[$privilege]);
 				}
 			}
 		}
 
-		return $roleEntities;
+		return $roles;
 	}
 }

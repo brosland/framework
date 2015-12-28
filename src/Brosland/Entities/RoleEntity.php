@@ -23,7 +23,7 @@ class RoleEntity implements \Nette\Security\IRole
 	 * @ORM\Column(type="text")
 	 * @var string
 	 */
-	private $description;
+	private $description = '';
 	/**
 	 * @ORM\Column(type="boolean")
 	 * @var string
@@ -125,6 +125,30 @@ class RoleEntity implements \Nette\Security\IRole
 	public function addPrivilege(PrivilegeEntity $privilege)
 	{
 		$this->privileges->add($privilege);
+
+		return $this;
+	}
+
+	/**
+	 * @var array|\Doctrine\Common\Collections\Collection
+	 * @return self
+	 */
+	public function addPrivileges($privileges)
+	{
+		foreach ($privileges as $privilege)
+		{
+			$this->privileges->add($privilege);
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @return self
+	 */
+	public function removePrivileges()
+	{
+		$this->privileges->clear();
 
 		return $this;
 	}
