@@ -32,7 +32,7 @@ class PreferenceEntity
 	public function __construct($name, $value = NULL)
 	{
 		$this->name = $name;
-		$this->value = $value;
+		$this->setValue($value);
 	}
 
 	/**
@@ -44,18 +44,7 @@ class PreferenceEntity
 	}
 
 	/**
-	 * @param string $name
-	 * @return self
-	 */
-	public function setName($name)
-	{
-		$this->name = $name;
-
-		return $this;
-	}
-
-	/**
-	 * @return mixin
+	 * @return string
 	 */
 	public function getValue()
 	{
@@ -63,12 +52,12 @@ class PreferenceEntity
 	}
 
 	/**
-	 * @param string $value
+	 * @param mixed $value
 	 * @return self
 	 */
 	public function setValue($value = NULL)
 	{
-		$this->value = $value;
+		$this->value = $value === NULL ? NULL : (string) $value;
 
 		return $this;
 	}
@@ -78,6 +67,6 @@ class PreferenceEntity
 	 */
 	public function __toString()
 	{
-		return sprintf('%d - %s => %s', $this->id, $this->name, $this->value);
+		return sprintf('[%d] %s => %s', $this->id, $this->name, $this->value);
 	}
 }

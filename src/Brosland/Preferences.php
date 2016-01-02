@@ -23,7 +23,7 @@ class Preferences extends \Nette\Object
 
 
 	/**
-	 * @param EntityDao $entityManager
+	 * @param EntityManager $entityManager
 	 */
 	public function __construct(EntityManager $entityManager)
 	{
@@ -31,63 +31,14 @@ class Preferences extends \Nette\Object
 	}
 
 	/**
-	 * @param string $name
-	 * @param mixed $value
+	 * @param array $defaults
 	 * @return self
 	 */
-	public function setDefaultPreference($name, $value)
+	public function setDefaults(array $defaults)
 	{
-		if ($value === NULL && isset($this->defaults[$name]))
-		{
-			unset($this->defaults[$name]);
-		}
-		else
-		{
-			$this->defaults[$name] = $value;
-		}
+		$this->defaults = array_merge($this->defaults, $defaults);
 
 		return $this;
-	}
-
-	/**
-	 * @param string $domain
-	 * @param bool $indexWithoutDomain
-	 * @return mixed
-	 */
-	public function getPreferences($domain, $indexWithoutDomain = FALSE)
-	{
-		$query = $this->preferenceDao->createQueryBuilder('preference', 'preference.name');
-		$query->where('preference.name LIKE :domain')
-			->setParameter('domain', $domain . '%');
-
-		$result = $query->getQuery()->getResult();
-
-		$this->preferences = array_merge($this->preferences, $result);
-
-		$pattern = "/^{$domain}\.?(.*)$/";
-
-		foreach ($this->defaults as $name => $value)
-		{
-			if (preg_match($pattern, $name) && !isset($result[$name]))
-			{
-				$result[$name] = $value;
-			}
-		}
-
-		$preferences = [];
-
-		foreach ($result as $name => $preference)
-		{
-			if ($indexWithoutDomain)
-			{
-				$name = preg_filter($pattern, '$1', $name);
-			}
-
-			$preferences[$name] = $preference instanceof PreferenceEntity ?
-				$preference->getValue() : $preference;
-		}
-
-		return $preferences;
 	}
 
 	/**
@@ -109,6 +60,35 @@ class Preferences extends \Nette\Object
 	}
 
 	/**
+	 * @param array $names
+	 * @param bool $useKeys
+	 * @return array
+	 */
+	public function getPreferences(array $names, $useKeys = FALSE)
+	{
+		$preferences = $this->loadPreferences(array_values($names));
+		$result = [];
+
+		foreach ($names as $key => $name)
+		{
+			$value = NULL;
+
+			if ($preferences[$name] != NULL)
+			{
+				$value = $preferences[$name]->getValue();
+			}
+			else if (isset($this->defaults[$name]))
+			{
+				$value = $this->defaults[$name];
+			}
+
+			$result[$useKeys ? $key : $name] = $value;
+		}
+
+		return $result;
+	}
+
+	/**
 	 * @param string $name
 	 * @param mixin $value
 	 * @return self
@@ -121,24 +101,23 @@ class Preferences extends \Nette\Object
 		{
 			if (!$preference)
 			{
-				$preference = new PreferenceEntity($name, $value);
+				$preference = new PreferenceEntity($name);
 			}
 
 			$preference->setValue($value);
 
 			$this->preferenceDao->getEntityManager()->persist($preference);
-
-			$this->preferences[] = $this->changedPreferences[] = $preference;
+			$this->preferences[$name] = $this->changedPreferences[$name] = $preference;
 		}
-		else if ($preference)
+		else
 		{
-			if (isset($this->preferences[$name]))
-			{
-				unset($this->preferences[$name]);
-			}
+			$this->preferences[$name] = NULL;
 
-			$this->changedPreferences[] = $preference;
-			$this->preferenceDao->getEntityManager()->remove($preference);
+			if ($preference)
+			{
+				$this->preferenceDao->getEntityManager()->remove($preference);
+				$this->changedPreferences[] = $preference;
+			}
 		}
 
 		return $this;
@@ -164,11 +143,42 @@ class Preferences extends \Nette\Object
 	 */
 	private function loadPreference($name)
 	{
-		if (isset($this->preferences[$name]))
+		if (!array_key_exists($name, $this->preferences))
 		{
-			return $this->preferences[$name];
+			$this->preferences[$name] = $this->preferenceDao->findOneBy(['name' => $name]);
 		}
 
-		return $this->preferenceDao->findOneBy(['name' => $name]);
+		return $this->preferences[$name];
+	}
+
+	/**
+	 * @param array $names
+	 * @return PreferenceEntity[]
+	 */
+	private function loadPreferences(array $names)
+	{
+		$tmp = array_filter($names, function ($name)
+		{
+			return !array_key_exists($name, $this->preferences);
+		});
+
+		if (!empty($tmp))
+		{
+			$result = $this->preferenceDao->findAssoc(['name' => $tmp], 'name');
+
+			foreach ($tmp as $name)
+			{
+				$this->preferences[$name] = isset($result[$name]) ? $result[$name] : NULL;
+			}
+		}
+
+		$preferences = [];
+
+		foreach ($names as $name)
+		{
+			$preferences[$name] = $this->preferences[$name];
+		}
+
+		return $preferences;
 	}
 }
