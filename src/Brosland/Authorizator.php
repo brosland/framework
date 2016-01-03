@@ -110,7 +110,7 @@ class Authorizator extends Permission
 	 * @param array $privileges
 	 * @return self
 	 */
-	public function addPrivilegeDefinitions($privileges)
+	public function addPrivilegeDefinitions(array $privileges)
 	{
 		$this->privilegeDefinitions = array_merge($this->privilegeDefinitions, $privileges);
 
@@ -121,7 +121,7 @@ class Authorizator extends Permission
 	 * @param array $roles
 	 * @return self
 	 */
-	public function addRoleDefinitions($roles)
+	public function addRoleDefinitions(array $roles)
 	{
 		$this->roleDefinitions = array_merge($this->roleDefinitions, $roles);
 
@@ -219,11 +219,11 @@ class Authorizator extends Permission
 			{
 				list($resource, $permission) = explode(':', $privilege);
 
-				if ($resource === self::ALL && $permission === self::ALL)
+				if ($resource == '*' && $permission == '*')
 				{
 					$roleEntity->addPrivileges($privilegeEntities);
 				}
-				else if ($permission === self::ALL)
+				else if ($permission == '*')
 				{
 					$filter = function (PrivilegeEntity $privilege) use ($resource)
 					{
