@@ -24,10 +24,7 @@ class Authorizator extends Permission
 	/**
 	 * @var array
 	 */
-	private $privilegeDefinitions = [], $roleDefinitions = [
-			self::ROLE_GUEST => ['static' => TRUE],
-			self::ROLE_AUTHENTICATED => ['static' => TRUE]
-	];
+	private $privilegeDefinitions = [], $roleDefinitions = [];
 	/**
 	 * @var bool
 	 */
@@ -50,6 +47,10 @@ class Authorizator extends Permission
 		{
 			return;
 		}
+
+		// default roles
+		$this->addRole(self::ROLE_GUEST);
+		$this->addRole(self::ROLE_AUTHENTICATED);
 
 		$roles = $this->roleDao->createQueryBuilder('role')
 				->addSelect('privilege')

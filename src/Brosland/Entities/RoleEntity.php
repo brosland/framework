@@ -158,7 +158,7 @@ class RoleEntity implements \Nette\Security\IRole
 	 */
 	public function getRoleId()
 	{
-		return (string) $this->id;
+		return $this->name;
 	}
 
 	/**
