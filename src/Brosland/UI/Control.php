@@ -4,33 +4,25 @@ namespace Brosland\UI;
 
 abstract class Control extends \Nette\Application\UI\Control
 {
+
+	const VIEW_DEFAULT = 'default';
+
+
 	/**
 	 * @var string
 	 */
-	protected $view = 'default';
+	protected $view = self::VIEW_DEFAULT;
 
 
 	/**
-	 * @param \Nette\ComponentModel\IComponent $component
+	 * @param string $view
+	 * @return self
 	 */
-	protected function attached($component)
+	public function setView($view)
 	{
-		parent::attached($component);
+		$this->view = $view;
 
-		if (!$component instanceof Presenter)
-		{
-			return;
-		}
-
-		$this->configure($component);
-	}
-
-	/**
-	 * @param \Brosland\Application\UI\Presenter $presenter
-	 */
-	protected function configure(Presenter $presenter)
-	{
-		
+		return $this;
 	}
 
 	/**
@@ -63,14 +55,26 @@ abstract class Control extends \Nette\Application\UI\Control
 	}
 
 	/**
-	 * @param string $view
-	 * @return self
+	 * @param \Nette\ComponentModel\IComponent $component
 	 */
-	public function setView($view)
+	protected function attached($component)
 	{
-		$this->view = $view;
+		parent::attached($component);
 
-		return $this;
+		if (!$component instanceof Presenter)
+		{
+			return;
+		}
+
+		$this->configure($component);
+	}
+
+	/**
+	 * @param \Brosland\Application\UI\Presenter $presenter
+	 */
+	protected function configure(Presenter $presenter)
+	{
+		
 	}
 
 	/**
@@ -81,16 +85,30 @@ abstract class Control extends \Nette\Application\UI\Control
 		$reflection = $this->getReflection();
 		$className = $reflection->getShortName();
 
-		return dirname($reflection->getFileName()) . '/../templates/components/'
+		return dirname($reflection->getFileName()) . '/templates/'
 			. $className . '/' . $this->view . '.latte';
+	}
+
+	/**
+	 * @return \Nette\Application\UI\ITemplate
+	 */
+	protected function createTemplate()
+	{
+		$template = parent::createTemplate();
+
+		$templatePath = $this->formatTemplatePath();
+
+		if (file_exists($templatePath))
+		{
+			$template->setFile($templatePath);
+		}
+
+		return $template;
 	}
 
 	protected function beforeRender()
 	{
-		if (!$this->template->getFile())
-		{
-			$this->template->setFile($this->formatTemplatePath());
-		}
+		
 	}
 
 	public function render()
