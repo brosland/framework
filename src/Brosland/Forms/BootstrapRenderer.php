@@ -121,7 +121,7 @@ class BootstrapRenderer extends DefaultFormRenderer
 				$control instanceof Controls\SelectBox ||
 				$control instanceof Controls\MultiSelectBox)
 			{
-				$control->getControlPrototype()->addClass('form-control');
+				$control->getControlPrototype()->addClass('form-control input-sm');
 			}
 			else if ($control instanceof Controls\Checkbox ||
 				$control instanceof Controls\CheckboxList ||

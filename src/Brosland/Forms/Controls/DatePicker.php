@@ -8,6 +8,7 @@ use DateTime,
 
 class DatePicker extends TextInput
 {
+
 	/**
 	 * @var string
 	 */
@@ -99,7 +100,6 @@ class DatePicker extends TextInput
 	public function getControl()
 	{
 		$control = parent::getControl();
-		$control->class[] = 'datepicker';
 		$control->data('datepicker-format', $this->translateFormatToJs($this->format));
 
 		return $control;
