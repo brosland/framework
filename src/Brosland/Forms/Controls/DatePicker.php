@@ -4,6 +4,7 @@ namespace Brosland\Forms\Controls;
 
 use DateTime,
 	Nette\Application\UI\Form,
+	Nette\Forms\Container,
 	Nette\Forms\Controls\TextInput;
 
 class DatePicker extends TextInput
@@ -112,5 +113,20 @@ class DatePicker extends TextInput
 	protected function translateFormatToJs($format)
 	{
 		return str_replace(array_keys(static::$JS_DATE_FORMATS), array_values(static::$JS_DATE_FORMATS), $this->translate($format));
+	}
+
+	/**
+	 * Registers method 'addDatePicker' adding DatePicker to form
+	 */
+	public static function register($defaultDateFormat = 'd/m/Y')
+	{
+		Container::extensionMethod('addDatePicker', function (Container $container, $name, $label = NULL)
+			use ($defaultDateFormat)
+		{
+			$control = $container[$name] = new DatePicker($label);
+			$control->setDateFormat($defaultDateFormat);
+
+			return $control;
+		});
 	}
 }

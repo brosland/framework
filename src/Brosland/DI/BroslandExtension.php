@@ -2,7 +2,8 @@
 
 namespace Brosland\DI;
 
-use Kdyby\Doctrine\DI\IEntityProvider;
+use Kdyby\Doctrine\DI\IEntityProvider,
+	Nette\PhpGenerator\ClassType;
 
 class BroslandExtension extends \Nette\DI\CompilerExtension implements IEntityProvider
 {
@@ -26,7 +27,6 @@ class BroslandExtension extends \Nette\DI\CompilerExtension implements IEntityPr
 			)
 		),
 		'security' => array (
-			'passwordSalt' => '',
 			'privileges' => array (),
 			'roles' => array ()
 		)

@@ -2,6 +2,8 @@
 
 namespace Brosland\UI;
 
+use Nette\InvalidArgumentException;
+
 abstract class Control extends \Nette\Application\UI\Control
 {
 
@@ -12,15 +14,41 @@ abstract class Control extends \Nette\Application\UI\Control
 	 * @var string
 	 */
 	protected $view = self::VIEW_DEFAULT;
+	/**
+	 * @var string
+	 */
+	protected $templatePath = NULL;
 
 
 	/**
-	 * @param string $view
+	 * @return array
+	 */
+	public function getSupportedViews()
+	{
+		return [self::VIEW_DEFAULT];
+	}
+
+	/**
+	 * @param string $view Name of view or a template path
 	 * @return self
+	 * @throws InvalidArgumentException
 	 */
 	public function setView($view)
 	{
-		$this->view = $view;
+		$supportedViews = $this->getSupportedViews();
+
+		if (isset($supportedViews[$view]))
+		{
+			$this->view = $view;
+		}
+		else if (file_exists($view)) // template path
+		{
+			$this->templatePath = $view;
+		}
+		else
+		{
+			\Tracy\Debugger::log(new InvalidArgumentException("Invalid view '$view'"));
+		}
 
 		return $this;
 	}
@@ -54,6 +82,23 @@ abstract class Control extends \Nette\Application\UI\Control
 		}
 	}
 
+	public function render()
+	{
+		$this->beforeRender();
+
+		$this->template->render();
+	}
+
+	/**
+	 * @return string
+	 */
+	public function __toString()
+	{
+		$this->beforeRender();
+
+		return (string) $this->template;
+	}
+
 	/**
 	 * @param \Nette\ComponentModel\IComponent $component
 	 */
@@ -78,15 +123,16 @@ abstract class Control extends \Nette\Application\UI\Control
 	}
 
 	/**
+	 * @param string $view
 	 * @return string
 	 */
-	protected function formatTemplatePath()
+	protected function formatTemplatePath($view)
 	{
 		$reflection = $this->getReflection();
 		$className = $reflection->getShortName();
 
 		return dirname($reflection->getFileName()) . '/templates/'
-			. $className . '/' . $this->view . '.latte';
+			. $className . '/' . $view . '.latte';
 	}
 
 	/**
@@ -96,32 +142,23 @@ abstract class Control extends \Nette\Application\UI\Control
 	{
 		$template = parent::createTemplate();
 
-		$templatePath = $this->formatTemplatePath();
-
-		if (file_exists($templatePath))
+		if ($this->templatePath == NULL)
 		{
-			$template->setFile($templatePath);
+			$this->templatePath = $this->formatTemplatePath($this->view);
 		}
+
+		$template->setFile($this->templatePath);
 
 		return $template;
 	}
 
 	protected function beforeRender()
 	{
-		
-	}
-
-	public function render()
-	{
-		$this->beforeRender();
-
 		$renderMethod = 'render' . ucfirst($this->view);
 
 		if (method_exists($this, $renderMethod))
 		{
 			$this->$renderMethod();
 		}
-
-		$this->template->render();
 	}
 }

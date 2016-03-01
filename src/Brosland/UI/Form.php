@@ -2,9 +2,6 @@
 
 namespace Brosland\UI;
 
-use Nextras\Forms\Controls,
-	Nette\Forms\Container;
-
 class Form extends \Nette\Application\UI\Form
 {
 
@@ -38,9 +35,3 @@ class Form extends \Nette\Application\UI\Form
 		
 	}
 }
-\Brosland\Forms\Controls\AntispamControl::register();
-
-Container::extensionMethod('addDatePicker', function (Container $container, $name, $label = NULL)
-{
-	return $container[$name] = new \Brosland\Forms\Controls\DatePicker($label);
-});
