@@ -21,34 +21,24 @@ abstract class Control extends \Nette\Application\UI\Control
 
 
 	/**
-	 * @return array
-	 */
-	public function getSupportedViews()
-	{
-		return [self::VIEW_DEFAULT];
-	}
-
-	/**
 	 * @param string $view Name of view or a template path
 	 * @return self
 	 * @throws InvalidArgumentException
 	 */
 	public function setView($view)
 	{
-		$supportedViews = $this->getSupportedViews();
+		$this->view = $view;
 
-		if (isset($supportedViews[$view]))
-		{
-			$this->view = $view;
-		}
-		else if (file_exists($view)) // template path
-		{
-			$this->templatePath = $view;
-		}
-		else
-		{
-			\Tracy\Debugger::log(new InvalidArgumentException("Invalid view '$view'"));
-		}
+		return $this;
+	}
+
+	/**
+	 * @param string $templatePath
+	 * @return self
+	 */
+	public function setTemplatePath($templatePath)
+	{
+		$this->templatePath = $templatePath;
 
 		return $this;
 	}
