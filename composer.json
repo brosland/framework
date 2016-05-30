@@ -19,7 +19,7 @@
 	"require": {
 		"php": ">= 5.5",
 		"nette/nette": "~2.3",
-		"kdyby/doctrine": "dev-master",
-		"kdyby/translation": "dev-master"
+		"kdyby/doctrine": "~2.4",
+		"kdyby/translation": "~2.2"
 	}
 }
