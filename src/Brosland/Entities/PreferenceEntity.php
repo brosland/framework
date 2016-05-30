@@ -10,8 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class PreferenceEntity
 {
-	use \Kdyby\Doctrine\Entities\Attributes\Identifier,
-	 \Kdyby\Doctrine\Entities\MagicAccessors;
+	use \Kdyby\Doctrine\Entities\Attributes\Identifier;
 
 	/**
 	 * @ORM\Column(unique=TRUE)

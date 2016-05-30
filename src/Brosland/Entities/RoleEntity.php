@@ -11,8 +11,7 @@ use Doctrine\Common\Collections\ArrayCollection,
  */
 class RoleEntity implements \Nette\Security\IRole
 {
-	use \Kdyby\Doctrine\Entities\Attributes\Identifier,
-	 \Kdyby\Doctrine\Entities\MagicAccessors;
+	use \Kdyby\Doctrine\Entities\Attributes\Identifier;
 
 	/**
 	 * @ORM\Column(length=64, unique=TRUE)
